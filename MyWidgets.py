@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QFrame, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox, QSlider, QLabel)
+from PyQt5.QtWidgets import (QFrame, QWidget, QStackedLayout, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox, QSlider, QLabel, QListWidget, QListWidgetItem)
 
 class mySlider(QWidget):
 	def __init__(self, label, value):
@@ -11,12 +11,18 @@ class mySlider(QWidget):
 		self.layout.addWidget(self.parameter)
 
 		self.slider = QSlider(Qt.Vertical)
-		self.slider.setMinimum(0)
-		self.slider.setMaximum(1000)
-		self.slider.setValue(value*1000)
-		self.slider.setTickInterval(1) #prova a cambiare
-
-		self.layout.addWidget(self.slider)
+		if label == 'Depth':
+			self.slider.setMinimum(1)
+			self.slider.setMaximum(1000)
+			self.slider.setValue(value*200)
+			self.slider.setTickInterval(1)
+			self.layout.addWidget(self.slider)
+		else:
+			self.slider.setMinimum(1)
+			self.slider.setMaximum(1000)
+			self.slider.setValue(value*1000)
+			self.slider.setTickInterval(1)
+			self.layout.addWidget(self.slider)
 
 		self.setLayout(self.layout)
 
@@ -28,9 +34,150 @@ class EffectWidget(QGroupBox):
 		super().__init__()
 
 		self.setTitle(title)
-		self.setLayout(effect)
-		self.setMaximumHeight(250)
 
+		self.effectLayout = effect
+
+		self.setLayout(self.effectLayout)
+		self.setMaximumHeight(250)
+		self.setMinimumWidth(220)
+		self.setMaximumWidth(400)
+
+	def getLayout(self):
+		return self.effectLayout
+
+class MainEffectLayout(QStackedLayout):
+	def __init__(self, model):
+		super().__init__()
+
+		self.model = model
+
+		self.noEffWidget = NoEffectWidget(self.model)
+		self.distWidget = DistortionWidget(self.model)
+		self.wahWidget = WahWidget(self.model)
+		self.chordsWidget = ChordsWidget(self.model)
+
+		self.addWidget(self.noEffWidget)
+		self.addWidget(self.distWidget)
+		self.addWidget(self.wahWidget)
+		self.addWidget(self.chordsWidget)
+
+	def changeEffect(self, effect):
+		if effect == 'No Effect':
+			self.setCurrentWidget(self.noEffWidget)
+		elif effect == 'Distortion':
+			self.setCurrentWidget(self.distWidget)
+		elif effect == 'Auto-Wah':
+			self.setCurrentWidget(self.wahWidget)
+		elif effect == 'Harmonizer':
+			self.setCurrentWidget(self.chordsWidget)
+
+	def getEffect(self):
+		return self.currentWidget()
+
+class NoEffectWidget(QWidget):
+	def __init__(self, model):
+		super().__init__()
+
+class DistortionWidget(QWidget):
+	def __init__(self, model):
+		super().__init__()
+
+		self.model = model
+
+		self.layout = QVBoxLayout()
+		self.invisibleLabel = QLabel('')
+		self.layout.addWidget(self.invisibleLabel)
+
+		self.paramLayout = QHBoxLayout()
+
+		self.distDrive = mySlider('Drive', 0.75)
+		self.paramLayout.addWidget(self.distDrive)
+
+		self.LPFSlope = mySlider('LPF Slope', 0.5)
+		self.paramLayout.addWidget(self.LPFSlope)
+
+		self.paramWidget = QWidget()
+		self.paramWidget.setLayout(self.paramLayout)
+		
+		self.layout.addWidget(self.paramWidget)
+
+		self.distDrive.getSlider().valueChanged.connect(self.setDrive)
+		self.LPFSlope.getSlider().valueChanged.connect(self.setLPFSlope)
+
+		self.setLayout(self.layout)
+
+
+	def setDrive(self):
+		self.model.getDistortion().setDrive(self.distDrive.getSlider().value()/1000)
+
+	def setLPFSlope(self):
+		self.model.getDistortion().setSlope(self.LPFSlope.getSlider().value()/1000)
+
+	def reset(self):
+		self.distDrive.getSlider().setValue(750)
+		self.LPFSlope.getSlider().setValue(500)
+
+
+class WahWidget(QWidget):
+	def __init__(self, model):
+		super().__init__()
+
+	def setDepth(self):
+		self.model.getChorus().setDepth(self.chorusDepth.getSlider().value()/200)
+
+	def setFeedback(self):
+		self.model.getChorus().setFeedback(self.chorusFB.getSlider().value()/1000)
+
+	def setBal(self):
+		self.model.getChorus().setDryWet(self.chorusDryWet.getSlider().value()/1000)
+
+class ChordsWidget(QWidget):
+	def __init__(self, model):
+		super().__init__()
+
+		self.model = model
+
+		self.layout = QVBoxLayout()
+
+		self.chordsList = QListWidget()
+		self.chordsList.addItem(QListWidgetItem('Major'))
+		self.chordsList.addItem(QListWidgetItem('Major 7th'))
+		self.chordsList.addItem(QListWidgetItem('Major 7th-Maj'))
+		self.chordsList.addItem(QListWidgetItem('Minor'))
+		self.chordsList.addItem(QListWidgetItem('Minor 7th'))
+		self.chordsList.addItem(QListWidgetItem('Minor 7th-Maj'))
+		self.chordsList.addItem(QListWidgetItem('Diminished'))
+		self.chordsList.setCurrentItem(self.chordsList.item(0))
+		self.layout.addWidget(self.chordsList)
+
+		self.setLayout(self.layout)
+
+		self.chordsList.itemSelectionChanged.connect(self.changeChords)
+
+	def changeChords(self):
+		if self.chordsList.currentItem().text() == 'Major':
+			self.model.getChords().setMajor()
+
+		elif self.chordsList.currentItem().text() == 'Major 7th':
+			self.model.getChords().setMajor7th()
+
+		elif self.chordsList.currentItem().text() == 'Major 7th-Maj':
+			self.model.getChords().setMajor7thMaj()
+
+		elif self.chordsList.currentItem().text() == 'Minor':
+			self.model.getChords().setMinor()
+
+		elif self.chordsList.currentItem().text() == 'Minor 7th':
+			self.model.getChords().setMinor7th()
+
+		elif self.chordsList.currentItem().text() == 'Minor 7th-Maj':
+			self.model.getChords().setMinor7thMaj()
+
+		elif self.chordsList.currentItem().text() == 'Diminished':
+			self.model.getChords().setDiminished()
+
+	def reset(self):
+		self.chordsList.setCurrentItem(self.chordsList.item(0))
 
 class ReverbLayout(QVBoxLayout):
 	def __init__(self, model):
@@ -69,6 +216,11 @@ class ReverbLayout(QVBoxLayout):
 		else:
 			self.enableReverb.setText('Enable')
 			self.model.disableReverb()
+
+	def reset(self):
+		self.reverbSize.getSlider().setValue(500)
+		self.reverbHFA.getSlider().setValue(500)
+		self.reverbBal.getSlider().setValue(500)
 
 	def setSize(self):
 		self.model.getReverb().setIntensity(self.reverbSize.getSlider().value()/1000)
@@ -113,9 +265,12 @@ class DelayLayout(QVBoxLayout):
 			self.enableDelay.setText('Enable')
 			self.model.disableDelay()
 
+	def reset(self):
+		self.delayAmount.getSlider().setValue(250)
+		self.delayFeedback.getSlider().setValue(0)
+
 	def setAmountDelay(self):
 		self.model.getDelay().setDelay(self.delayAmount.getSlider().value()/1000)
 
 	def setFeedback(self):
 		self.model.getDelay().setFeedback(self.delayFeedback.getSlider().value()/1000)
-

@@ -157,25 +157,39 @@ class ChordsWidget(QWidget):
 	def changeChords(self):
 		if self.chordsList.currentItem().text() == 'Major':
 			self.model.getChords().setMajor()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Major 7th':
 			self.model.getChords().setMajor7th()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Major 7th-Maj':
 			self.model.getChords().setMajor7thMaj()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor':
 			self.model.getChords().setMinor()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor 7th':
 			self.model.getChords().setMinor7th()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor 7th-Maj':
 			self.model.getChords().setMinor7thMaj()
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Diminished':
 			self.model.getChords().setDiminished()
-
+			self.model.getReverb().setInput(self.model.getChords().getSignal())
+			self.model.getDelay().setInput(self.model.getChords().getSignal())
+			
 	def reset(self):
 		self.chordsList.setCurrentItem(self.chordsList.item(0))
 
@@ -221,6 +235,8 @@ class ReverbLayout(QVBoxLayout):
 		self.reverbSize.getSlider().setValue(500)
 		self.reverbHFA.getSlider().setValue(500)
 		self.reverbBal.getSlider().setValue(500)
+		self.enableReverb.setText('Enable')
+		self.enableReverb.setCheckState(Qt.Unchecked)
 
 	def setSize(self):
 		self.model.getReverb().setIntensity(self.reverbSize.getSlider().value()/1000)
@@ -268,6 +284,8 @@ class DelayLayout(QVBoxLayout):
 	def reset(self):
 		self.delayAmount.getSlider().setValue(250)
 		self.delayFeedback.getSlider().setValue(0)
+		self.enableDelay.setText('Enable')
+		self.enableDelay.setCheckState(Qt.Unchecked)
 
 	def setAmountDelay(self):
 		self.model.getDelay().setDelay(self.delayAmount.getSlider().value()/1000)

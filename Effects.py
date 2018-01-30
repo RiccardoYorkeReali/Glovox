@@ -15,6 +15,9 @@ class NoEFF():
 	def isOutputting(self):
 		return self.signal.isOutputting()
 
+	def getSignal(self):
+		return self.signal
+
 class DistortionEFF():
 	def __init__(self, cleanS):
 		self.drive = 0.75
@@ -41,6 +44,9 @@ class DistortionEFF():
 	def isOutputting(self):
 		return self.dist.isOutputting()
 
+	def getSignal(self):
+		return self.dist
+
 class AutoWahEFF():
 	def __init__(self, cleanS):
 		self.fol = Follower(cleanS, freq=30, mul=4000, add=40)
@@ -55,118 +61,105 @@ class AutoWahEFF():
 	def isOutputting(self):
 		return self.wah.isOutputting()
 
+	def getSignal(self):
+		return self.wah
+
 class ChordsEFF():
 	def __init__(self, cleanS):
 		self.first = cleanS
+
 		self.third = Harmonizer(self.first, transpo = 4)
 		self.fifth = Harmonizer(self.third, transpo = 3)
 		self.lastNote = Harmonizer(self.fifth, transpo = 5) #Default major chords
 
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+
 	def setMajor(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 4)
 		self.fifth = Harmonizer(self.third, transpo = 3)
+		self.lastNote = Harmonizer(self.fifth, transpo = 5)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
+
 
 	def setMajor7th(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 4)
 		self.fifth = Harmonizer(self.third, transpo = 3)
 		self.lastNote = Harmonizer(self.fifth, transpo = 3)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 	def setMajor7thMaj(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 4)
 		self.fifth = Harmonizer(self.third, transpo = 3)
 		self.lastNote = Harmonizer(self.fifth, transpo = 4)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 	def setMinor(self):
-		self.third.stop()
-		self.fifth.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 3)
 		self.fifth = Harmonizer(self.third, transpo = 4)
+		self.lastNote = Harmonizer(self.fifth, transpo = 5)
 
-		self.third.out()
-		self.fifth.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 
 	def setMinor7th(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 3)
 		self.fifth = Harmonizer(self.third, transpo = 4)
 		self.lastNote = Harmonizer(self.fifth, transpo = 3)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 	def setMinor7thMaj(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 3)
 		self.fifth = Harmonizer(self.third, transpo = 4)
 		self.lastNote = Harmonizer(self.fifth, transpo = 4)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 	def setDiminished(self):
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 		self.third = Harmonizer(self.first, transpo = 3)
 		self.fifth = Harmonizer(self.third, transpo = 3)
 		self.lastNote = Harmonizer(self.fifth, transpo = 3)
 
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+		self.chords = self.first + self.third + self.fifth + self.lastNote
+		self.chords.out()
 
 	def reset(self):
 		self.setMajor()
 
-	def enable(self, output):
-		self.first.out()
-		self.third.out()
-		self.fifth.out()
-		self.lastNote.out()
+	def enable(self):
+		self.chords.out()
 		
 	def disable(self):
-		self.first.stop()
-		self.third.stop()
-		self.fifth.stop()
-		self.lastNote.stop()
+		self.chords.stop()
 
 	def isOutputting(self):
-		return self.first.isOutputting() and self.third.isOutputting() and self.fifth.isOutputting() and self.lastNote.isOutputting()
+		return self.chords.isOutputting()
+
+	def getSignal(self):
+		return self.chords
 
 class ReverbEFF():
 	def __init__(self, cleanS):
@@ -198,6 +191,9 @@ class ReverbEFF():
 		self.reverb.reset()
 		self.reverb.stop()
 
+	def setInput(self, x):
+		self.reverb.setInput(x)
+
 class DelayEFF():
 	def __init__(self, cleanS):
 		self.delayAmount = 0.25
@@ -222,3 +218,6 @@ class DelayEFF():
 	def disable(self):
 		self.delay.reset()
 		self.delay.stop()
+
+	def setInput(self, x):
+		self.delay.setInput(x)

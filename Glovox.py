@@ -52,7 +52,9 @@ class Glovox():
 		elif self.chords.isOutputting():
 			self.chords.disable()
 
+		#self.disableReverb()
 		self.reverb.reset()
+		#self.disableDelay()
 		self.delay.reset()
 		self.noEffect.enable(self.output)
 
@@ -67,9 +69,15 @@ class Glovox():
 		elif self.chords.isOutputting():
 			self.chords.disable()
 
-		self.distortion.reset()
+		#NB in verità, quando cambio effetto, la variabile di input per rev e delay va in stop, e quindi, rev e delay, se erano attivati non si sentono,
+		# ma non sono in stop. Tuttavia è pur vero che quando cambio effetto e poi riapplico al nuovo effetto o rev o delay, a questo viene cambiato
+		#l'input e quindi, il costo non dovrebbe essere grande. In ogni caso, meglio eliminare il problema alla radice, che rischiare di fargli fare 
+		#conti inutili
+		#self.disableReverb()
 		self.reverb.reset()
+		#self.disableDelay()
 		self.delay.reset()
+		self.distortion.reset()
 		self.distortion.enable(self.output)
 
 	def getChorus(self):
@@ -83,7 +91,9 @@ class Glovox():
 		elif self.chords.isOutputting():
 			self.chords.disable()
 
+		#self.disableReverb()
 		self.reverb.reset()
+		#self.disableDelay()
 		self.delay.reset()
 		self.wah.enable(self.output)
 
@@ -98,17 +108,25 @@ class Glovox():
 		elif self.wah.isOutputting():
 			self.wah.disable()
 
+		#self.disableReverb()
 		self.reverb.reset()
+		#self.disableDelay()
 		self.delay.reset()
 		self.chords.reset()
-		self.chords.enable(self.output)
-
+		self.chords.enable()
 
 	def getReverb(self):
 		return self.reverb
 
 	def enableReverb(self):
-		self.reverb.enable(self.output)
+		if self.noEffect.isOutputting():
+			self.reverb.enable(self.noEffect.getSignal())
+		elif self.distortion.isOutputting():
+			self.reverb.enable(self.distortion.getSignal())
+		elif self.wah.isOutputting():
+			self.reverb.enable(self.wah.getSignal())
+		elif self.chords.isOutputting():
+			self.reverb.enable(self.chords.getSignal())
 
 	def disableReverb(self):
 		self.reverb.disable()
@@ -117,7 +135,14 @@ class Glovox():
 		return self.delay
 
 	def enableDelay(self):
-		self.delay.enable(self.output)
+		if self.noEffect.isOutputting():
+			self.delay.enable(self.noEffect.getSignal())
+		elif self.distortion.isOutputting():
+			self.delay.enable(self.distortion.getSignal())
+		elif self.wah.isOutputting():
+			self.delay.enable(self.wah.getSignal())
+		elif self.chords.isOutputting():
+			self.delay.enable(self.chords.getSignal())
 
 	def disableDelay(self):
 		self.delay.disable()

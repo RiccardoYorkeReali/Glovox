@@ -34,7 +34,7 @@ class MainWindow(QWidget):
         effectListBox.setMinimumWidth(150)
         effectListBox.setLayout(effectListLayout)
 
-        #Effects management: analyzer and parameters
+        #Effects manager: analyzer and parameters
 
         analyzerLayout = QVBoxLayout()
         analyzerBox = QGroupBox('Analyzer')
@@ -46,13 +46,21 @@ class MainWindow(QWidget):
         self.rev = EffectWidget('Reverb', ReverbLayout(self.model))
         self.delay = EffectWidget('Delay', DelayLayout(self.model))
 
+        self.effect.setMinimumWidth(200)
+        self.rev.setMinimumWidth(275)
+        self.delay.setMinimumWidth(200)
+
+        self.effect.setMaximumWidth(300)
+        self.rev.setMaximumWidth(375)
+        self.delay.setMaximumWidth(300)
+
+
         effectParameterLayout.addWidget(self.effect)
         effectParameterLayout.addWidget(self.rev)
         effectParameterLayout.addWidget(self.delay)
 
         effectParameterBox = QWidget()
         effectParameterBox.setLayout(effectParameterLayout)
-
 
         effectManagementLayout = QVBoxLayout()
         effectManagementLayout.addWidget(analyzerBox)

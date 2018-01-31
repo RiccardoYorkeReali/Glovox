@@ -8,6 +8,7 @@ class mySlider(QWidget):
 		self.layout = QVBoxLayout()
 
 		self.parameter = QLabel(label)
+		self.parameter.setAlignment(Qt.AlignHCenter)
 		self.layout.addWidget(self.parameter)
 
 		self.slider = QSlider(Qt.Vertical)
@@ -24,6 +25,7 @@ class mySlider(QWidget):
 			self.slider.setTickInterval(1)
 			self.layout.addWidget(self.slider)
 
+		self.layout.setAlignment(self.slider, Qt.AlignHCenter)
 		self.setLayout(self.layout)
 
 	def getSlider(self):
@@ -37,10 +39,9 @@ class EffectWidget(QGroupBox):
 
 		self.effectLayout = effect
 
-		self.setLayout(self.effectLayout)
 		self.setMaximumHeight(250)
-		self.setMinimumWidth(220)
-		self.setMaximumWidth(400)
+
+		self.setLayout(self.effectLayout)
 
 	def getLayout(self):
 		return self.effectLayout
@@ -207,7 +208,7 @@ class ReverbLayout(QVBoxLayout):
 		self.reverbSize = mySlider('Intensity', 0.5)
 		self.paramLayout.addWidget(self.reverbSize)
 
-		self.reverbHFA = mySlider('High Freq. Attenuation', 0.5)
+		self.reverbHFA = mySlider('HFA', 0.5)
 		self.paramLayout.addWidget(self.reverbHFA)
 
 		self.reverbBal = mySlider('Dry/Wet', 0.5)

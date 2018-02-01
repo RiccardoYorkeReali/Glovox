@@ -5,7 +5,7 @@ from Effects import NoEFF, DistortionEFF, AutoWahEFF, ChordsEFF, ReverbEFF , Del
 
 class Glovox():
 	def __init__(self):
-		self.server = Server(nchnls = 1)
+		self.server = Server(buffersize = 512, nchnls = 1)
 		self.server.boot()
 
 		#setting microphone as input

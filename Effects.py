@@ -1,6 +1,8 @@
 from pyo import *
 
 #EFFECTS
+"""Each effect has the related signal as attributes, getter and setter methods for each effect's parameters, 
+enabling, disabling and resetting method. A description of each effect can be found in effects.json file."""
 
 class NoEFF():
 	def __init__(self, cleanS):
@@ -166,7 +168,7 @@ class SineEFF():
 	def __init__(self, gatedS, freqS):
 		self.sine = Sine(freqS, phase = 0, mul = 0.2*gatedS)
 
-	def setPhase(self, phase):#valutare se metterlo questo parametro tanto non cambia nulla
+	def setPhase(self, phase): # valutare se metterlo questo parametro tanto non cambia nulla
 		self.sine.setPhase(phase)
 
 	def getPhase(self):
@@ -189,7 +191,7 @@ class SineEFF():
 
 class BlitEFF():
 	def __init__(self, gatedS, freqS):
-		self.blit = Blit(freqS, harms = 40, mul = 0.2*gatedS)
+		self.blit = Blit(freqS, harms=40, mul=0.2*gatedS)
 
 	def setHarms(self, harms):
 		self.blit.setHarms(harms)
@@ -339,41 +341,49 @@ class LFOEff():
 
 class ReverbEFF():
 	def __init__(self, cleanS):
-		self.reverb = Freeverb(cleanS, size = 0.5, damp = 0.5, bal = 0.5)
+		self.stereoRev = STRev(cleanS, revtime = 1.0, cutoff = 5000, roomSize = 1.0, bal = 0.5)
 
-	def setIntensity(self, intensity):
-		self.reverb.setSize(intensity)
+	def setRevTime(self, revTime):
+		self.stereoRev.setRevtime(revTime)
 
-	def getIntensity(self):
-		return self.reverb.size
+	def getRevTime(self):
+		return self.stereoRev.revtime
 
-	def setHFA(self, HFA):
-		self.reverb.setDamp(HFA)
+	def setCutoff(self, cutoff):
+		self.stereoRev.setCutoff(cutoff)
 
-	def getHFA(self):
-		return self.reverb.damp
+	def getCutoff(self):
+		return self.stereoRev.cutoff
 
-	def setDryWet(self, dryWet):
-		self.reverb.setBal(dryWet)	
+	def setRoomSize(self, roomSize):
+		self.stereoRev.setRoomSize(roomSize)
 
-	def getDryWet(self):
-		return self.reverb.bal
+	def getRoomSize(self):
+		return self.stereoRev.roomSize
+
+	def setBal(self, bal):
+		self.stereoRev.setBal(bal)
+
+	def getBal(self):
+		return self.stereoRev.bal
 
 	def reset(self):
-		self.setIntensity(0.5)
-		self.setHFA(0.5)
-		self.setDryWet(0.5)
+		self.setRevTime(1)
+		self.setCutoff(5000)
+		self.setRoomSize(1.0)
+		self.setBal(0.5)
 
 	def enable(self, output):
-		self.reverb.setInput(output)
-		self.reverb.out()
+		self.stereoRev.setInput(output)
+		self.stereoRev.out()
 
 	def disable(self):
-		self.reverb.reset()
-		self.reverb.stop()
+		self.stereoRev.reset()
+		self.stereoRev.stop()
 
 	def setInput(self, x):
-		self.reverb.setInput(x)
+		self.stereoRev.setInput(x)
+
 
 class DelayEFF():
 	def __init__(self, cleanS):
@@ -400,7 +410,7 @@ class DelayEFF():
 		self.d.out()
 
 	def disable(self):
-		self.d.reset()
+		self.d.reset()# this reset is Pyo's reset function, not our custom one
 		self.d.stop()
 
 	def setInput(self, x):

@@ -21,6 +21,9 @@ if __name__ == '__main__':
     if qdark_present:
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
+    size = app.primaryScreen().size()
+
     #The View/Controller
-    window = MainWindow(model) 
+    window = MainWindow(model, size) 
+
     sys.exit(app.exec_())

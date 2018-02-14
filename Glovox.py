@@ -1,46 +1,55 @@
 from pyo import *
-from Effects import NoEFF, DistortionEFF, AutoWahEFF, ChordsEFF, SineEFF, BlitEFF, SuperSawEFF, PhasorEFF, RCOscEFF, LFOEff, ReverbEFF , DelayEFF
-#from waveform import Waveform
+from Effects import (NoEFF, DistortionEFF, AutoWahEFF, ChordsEFF, SineEFF, BlitEFF, SuperSawEFF, PhasorEFF, RCOscEFF, LFOEff, ReverbEFF, DelayEFF)
 import numpy as np
+import threading
+import atexit
 
 # The Model
 
-
 class Glovox():
 	def __init__(self):
-		self.server = Server(nchnls = 1, buffersize=1024)
+		self.server = Server(nchnls=1)
 		self.server.boot()
 
-		#setting microphone as input
-		#it is necessary usign two input because of the references of python. If we used just one input, some effects won't be listened to,
-		#because the use of stop() for stopping the normal signal output
-		# Find a logic with less number of inputs
-		self.input = Input(chnl = 0)
+		# setting microphones as input
+		# more inputs are used because calling stop() on just a single input disables all the pedals' output 
+		self.input = Input(chnl=0)
 
-		self.input2 = Input(chnl = 0)
+		self.input2 = Input(chnl=0)
 
-		self.input3 = Input(chnl = 0)
+		self.input3 = Input(chnl=0)
 
-		self.input4 = Input(chnl = 0)
-		self.gated = Gate(self.input4, thresh = -40, outputAmp = True)
-		self.freq = Yin(self.input4, cutoff = 3000)
+		self.input4 = Input(chnl=0)
 
-		self.output = Input(chnl = 0)
+		self.gated = Gate(self.input4, thresh=-40, outputAmp=True)
+		self.freq = Yin(self.input4, cutoff=3000)
+
+		self.input5 = Input(chnl=0)
 
 		self.createPedals()
 
-
-		##TO Create waveform
-
+		#TO COMMENT
 		# Create a table of length `buffer size` and read it in loop.
 		self.t = DataTable(size=self.server.getBufferSize())
-		#self.osc = TableRead(self.t, freq=self.t.getRate(), loop=True, mul=0.1).out()
 		# Share the table's memory with a numpy array.
-		self.frames = []
-		self.arr = np.asarray(self.t.getBuffer(), dtype=np.float64)
+		self.arr = np.asarray(self.t.getBuffer())
+		# callback necessary for waveform
 		self.server.setCallback(self.process)
 
+		self.lock = threading.Lock()
+		self.stop = False
+		"""This class runs in a thread. 
+		So to make sure it stops correctly, a call to atexit is registered at startup"""
+		atexit.register(self.close)
+
+
 		self.start()
+
+	def close(self):
+		with self.lock:
+			self.stop = True
+		self.t.reset()
+		self.server.stop()
 
 	def getServer(self):
 		return self.server
@@ -49,10 +58,8 @@ class Glovox():
 		self.server.start()
 		self.switchToNoEff()
 
-	def stop(self):
-		self.server.stop()
-
 	def createPedals(self):
+		#creating all the effects
 		self.noEffect = NoEFF(self.input)
 		self.distortion = DistortionEFF(self.input2)
 		self.wah = AutoWahEFF(self.input2)
@@ -63,30 +70,8 @@ class Glovox():
 		self.phasor = PhasorEFF(self.gated, self.freq)
 		self.rc = RCOscEFF(self.gated, self.freq)
 		self.lfo = LFOEff(self.gated, self.freq)
-		self.reverb = ReverbEFF(self.output)
-		self.delay = DelayEFF(self.output)
-
-	def getInput(self):
-		if self.noEffect.isOutputting():
-			return self.noEffect
-		elif self.distortion.isOutputting():
-			return self.distortion
-		elif self.wah.isOutputting():
-			return self.wah
-		elif self.chords.isOutputting():
-			return self.chords
-		elif self.sine.isOutputting():
-			return self.sine
-		elif self.blit.isOutputting():
-			return self.blit
-		elif self.superSaw.isOutputting():
-			return self.superSaw
-		elif self.phasor.isOutputting():
-			return self.phasor
-		elif self.rc.isOutputting():
-			return self.rc
-		elif self.lfo.isOutputting():
-			return self.lfo
+		self.reverb = ReverbEFF(self.input5)
+		self.delay = DelayEFF(self.input5)
 
 	def getNoEffect(self):
 		return self.noEffect
@@ -111,11 +96,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.noEffect.enable()
+		self.rec = TableFill(self.noEffect.getSignal(), self.t)
 
 	def getDistortion(self):
 		return self.distortion
@@ -140,12 +126,13 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.distortion.reset()
 		self.distortion.enable()
+		self.rec = TableFill(self.distortion.getSignal(), self.t)
 
 	def getWah(self):
 		return self.wah
@@ -170,11 +157,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.wah.enable()
+		self.rec = TableFill(self.wah.getSignal(), self.t)
 
 	def getChords(self):
 		return self.chords
@@ -199,12 +187,16 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.chords.reset()
 		self.chords.enable()
+		self.rec = TableFill(self.chords.getSignal(), self.t)
+
+	def updateTableChords(self):
+		self.rec = TableFill(self.chords.getSignal(), self.t)
 
 	def getSine(self):
 		return self.sine
@@ -229,11 +221,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.sine.enable()
+		self.rec = TableFill(self.sine.getSignal(), self.t)
 
 	def getBlit(self):
 		return self.blit
@@ -258,11 +251,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.blit.enable()
+		self.rec = TableFill(self.blit.getSignal(), self.t)
 
 	def getSuperSaw(self):
 		return self.superSaw
@@ -287,11 +281,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.superSaw.enable()
+		self.rec = TableFill(self.superSaw.getSignal(), self.t)
 
 	def getPhasor(self):
 		return self.phasor
@@ -316,11 +311,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.phasor.enable()
+		self.rec = TableFill(self.phasor.getSignal(), self.t)
 
 	def getRC(self):
 		return self.rc
@@ -345,11 +341,12 @@ class Glovox():
 		elif self.lfo.isOutputting():
 			self.lfo.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.rc.enable()
+		self.rec = TableFill(self.rc.getSignal(), self.t)
 
 	def getLFO(self):
 		return self.lfo
@@ -374,11 +371,12 @@ class Glovox():
 		elif self.rc.isOutputting():
 			self.rc.disable()
 
-		#self.disableReverb()
+		self.disableReverb()
 		self.reverb.reset()
-		#self.disableDelay()
+		self.disableDelay()
 		self.delay.reset()
 		self.lfo.enable()
+		self.rec = TableFill(self.lfo.getSignal(), self.t)
 
 	def getReverb(self):
 		return self.reverb
@@ -402,8 +400,6 @@ class Glovox():
 			self.reverb.enable(self.phasor.getSignal())
 		elif self.rc.isOutputting():
 			self.reverb.enable(self.rc.getSignal())
-		elif self.lfo.isOutputting():
-			self.reverb.enable(self.lfo.getSignal())
 
 	def disableReverb(self):
 		self.reverb.disable()
@@ -430,23 +426,21 @@ class Glovox():
 			self.delay.enable(self.phasor.getSignal())
 		elif self.rc.isOutputting():
 			self.delay.enable(self.rc.getSignal())
-		elif self.lfo.isOutputting():
-			self.delay.enable(self.lfo.getSignal())
-
 
 	def disableDelay(self):
 		self.delay.disable()
 
+#TO COMMENT
 	def process(self):
-		"Fill the array (so the table) with value of current input."
+		"""Fill the array (so the table) with value of current input."""
 		self.samples = self.t.getTable()
-		self.arr[1:] = self.arr[:-1]
-		self.arr[0] = self.samples[-1]
+		with self.lock:
+			self.arr[1:] = self.arr[:-1]
+			self.arr[0] = self.samples[-1]
+			if self.stop:
+				return None
+		return None
 
 	def getFrames(self):
-		"""frames = self.frames
-		self.frames = []"""
-		return self.arr
-
-	def getWaveform(self):
-		return self.waveform
+		with self.lock:
+			return self.arr

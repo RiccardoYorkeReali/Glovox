@@ -1,11 +1,17 @@
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QFrame, QWidget, QStackedLayout, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox, QSlider, QLabel, QListWidget, QListWidgetItem)
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import numpy as np
 import matplotlib.pyplot as plt
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import (QWidget, QStackedLayout, QVBoxLayout, QHBoxLayout, QCheckBox, QGroupBox, QSlider, QLabel, QListWidget, QListWidgetItem)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
+np.seterr(divide='ignore', invalid='ignore')
+
+# MY WIDGETS
 
 class mySlider(QWidget):
+	#Slider used to change effects' paramaters
 	def __init__(self, label, value):
 		super().__init__()
 
@@ -32,6 +38,24 @@ class mySlider(QWidget):
 			self.slider.setValue(value*10)
 			self.slider.setTickInterval(1)
 			self.layout.addWidget(self.slider)
+		elif label == 'Revtime':
+			self.slider.setMinimum(1000)
+			self.slider.setMaximum(5000)
+			self.slider.setValue(value * 1000)
+			self.slider.setTickInterval(1)
+			self.layout.addWidget(self.slider)
+		elif label == 'Cutoff':
+			self.slider.setMinimum(1)
+			self.slider.setMaximum(10000)
+			self.slider.setValue(value)
+			self.slider.setTickInterval(1)
+			self.layout.addWidget(self.slider)
+		elif label == 'Room':
+			self.slider.setMinimum(250)
+			self.slider.setMaximum(4000)
+			self.slider.setValue(value*1000)
+			self.slider.setTickInterval(1)
+			self.layout.addWidget(self.slider)
 		else:
 			self.slider.setMinimum(1)
 			self.slider.setMaximum(1000)
@@ -46,10 +70,10 @@ class mySlider(QWidget):
 		return self.slider
 
 	def updateValue(self, newValue):
-		print('siamo in update')
 		self.value.setText(str(newValue))
 
 class EffectWidget(QGroupBox):
+	#Effect Box. In this Widget will be displayed the active effect and it's paramaters slider (or list of options)
 	def __init__(self, title, effect): #Effect must be a Layout
 		super().__init__()
 
@@ -65,6 +89,7 @@ class EffectWidget(QGroupBox):
 		return self.effectLayout
 
 class MainEffectLayout(QStackedLayout):
+	#Stacked layout to display one effect at a time in the EffectWidget group box
 	def __init__(self, model):
 		super().__init__()
 
@@ -92,6 +117,10 @@ class MainEffectLayout(QStackedLayout):
 		self.addWidget(self.rcWidget)
 		self.addWidget(self.lfoWidget)
 
+		self.typeFont = QFont(".Lucida Grande UI", 18)
+		self.chordsWidget.chordsList.setFont(self.typeFont)
+		self.lfoWidget.lfoWf.setFont(self.typeFont)
+
 	def changeEffect(self, effect):
 		if effect == 'No Effect':
 			self.setCurrentWidget(self.noEffWidget)
@@ -117,6 +146,7 @@ class MainEffectLayout(QStackedLayout):
 	def getEffect(self):
 		return self.currentWidget()
 
+#The following classes implement the widgets related to each effect. Each class contains method to update model values and the view
 class NoEffectWidget(QWidget):
 	def __init__(self, model):
 		super().__init__()
@@ -149,7 +179,6 @@ class DistortionWidget(QWidget):
 
 		self.setLayout(self.layout)
 
-
 	def setDrive(self):
 		self.model.getDistortion().setDrive(self.distDrive.getSlider().value()/1000)
 		self.distDrive.updateValue(round(self.model.getDistortion().getDrive(),2))
@@ -164,7 +193,6 @@ class DistortionWidget(QWidget):
 
 		self.distDrive.updateValue(round(self.model.getDistortion().getDrive(),2))
 		self.LPFSlope.updateValue(round(self.model.getDistortion().getSlope(),2))
-
 
 class WahWidget(QWidget):
 	def __init__(self, model):
@@ -196,6 +224,7 @@ class ChordsWidget(QWidget):
 		self.chordsList.addItem(QListWidgetItem('Minor 7th-Maj'))
 		self.chordsList.addItem(QListWidgetItem('Diminished'))
 		self.chordsList.setCurrentItem(self.chordsList.item(0))
+
 		self.layout.addWidget(self.chordsList)
 
 		self.setLayout(self.layout)
@@ -205,36 +234,43 @@ class ChordsWidget(QWidget):
 	def changeChords(self):
 		if self.chordsList.currentItem().text() == 'Major':
 			self.model.getChords().setMajor()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Major 7th':
 			self.model.getChords().setMajor7th()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Major 7th-Maj':
 			self.model.getChords().setMajor7thMaj()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor':
 			self.model.getChords().setMinor()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor 7th':
 			self.model.getChords().setMinor7th()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Minor 7th-Maj':
 			self.model.getChords().setMinor7thMaj()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 
 		elif self.chordsList.currentItem().text() == 'Diminished':
 			self.model.getChords().setDiminished()
+			self.model.updateTableChords()
 			self.model.getReverb().setInput(self.model.getChords().getSignal())
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 			
@@ -271,6 +307,7 @@ class SineWidget(QWidget):
 
 	def reset(self):
 		self.sinePhase.getSlider().setValue(0)
+		self.sinePhase.updateValue(round(self.model.getSine().getPhase(), 2))
 
 class BlitWidget(QWidget):
 	def __init__(self, model):
@@ -302,6 +339,7 @@ class BlitWidget(QWidget):
 
 	def reset(self):
 		self.blitHarm.getSlider().setValue(400)
+		self.blitHarm.updateValue(round(self.model.getBlit().getHarms(), 2))
 
 class SuperSawWidget(QWidget):
 	def __init__(self, model):
@@ -341,6 +379,8 @@ class SuperSawWidget(QWidget):
 	def reset(self):
 		self.ssDetune.getSlider().setValue(500)
 		self.ssBal.getSlider().setValue(700)
+		self.ssDetune.updateValue(round(self.model.getSuperSaw().getDetune(), 2))
+		self.ssBal.updateValue(round(self.model.getSuperSaw().getBal(), 2))
 
 class PhasorWidget(QWidget):
 	def __init__(self, model):
@@ -372,6 +412,7 @@ class PhasorWidget(QWidget):
 
 	def reset(self):
 		self.phase.getSlider().setValue(0)
+		self.phase.updateValue(round(self.model.getPhasor().getPhase(), 2))
 
 class RCOscWidget(QWidget):
 	def __init__(self, model):
@@ -403,6 +444,7 @@ class RCOscWidget(QWidget):
 
 	def reset(self):
 		self.rcSharp.getSlider().setValue(250)
+		self.rcSharp.updateValue(round(self.model.getRC().getSharp(), 2))
 
 class LFOWidget(QWidget):
 	def __init__(self, model):
@@ -483,14 +525,17 @@ class ReverbLayout(QVBoxLayout):
 
 		self.paramLayout = QHBoxLayout()
 
-		self.reverbSize = mySlider('Intensity', 0.5)
-		self.paramLayout.addWidget(self.reverbSize)
+		self.revTime = mySlider('Revtime', 1.00)
+		self.paramLayout.addWidget(self.revTime)
 
-		self.reverbHFA = mySlider('HFA', 0.5)
-		self.paramLayout.addWidget(self.reverbHFA)
+		self.revCutoff = mySlider('Cutoff', 5000)
+		self.paramLayout.addWidget(self.revCutoff)
 
-		self.reverbBal = mySlider('Dry/Wet', 0.5)
-		self.paramLayout.addWidget(self.reverbBal)
+		self.roomSize = mySlider('Room', 0.25)
+		self.paramLayout.addWidget(self.roomSize)
+
+		self.revBalance = mySlider('Balance', 0.5)
+		self.paramLayout.addWidget(self.revBalance)
 
 		self.paramWidget = QWidget()
 		self.paramWidget.setLayout(self.paramLayout)
@@ -498,9 +543,10 @@ class ReverbLayout(QVBoxLayout):
 		self.addWidget(self.paramWidget)
 
 		self.enableReverb.stateChanged.connect(self.toggleReverbMode)
-		self.reverbSize.getSlider().valueChanged.connect(self.setSize)
-		self.reverbHFA.getSlider().valueChanged.connect(self.setHFA)
-		self.reverbBal.getSlider().valueChanged.connect(self.setBal)
+		self.revTime.getSlider().valueChanged.connect(self.setRevtime)
+		self.revCutoff.getSlider().valueChanged.connect(self.setCutoff)
+		self.roomSize.getSlider().valueChanged.connect(self.setRoomSize)
+		self.revBalance.getSlider().valueChanged.connect(self.setRevBalance)
 
 	def toggleReverbMode(self, activate):
 		if activate == Qt.Checked:
@@ -511,23 +557,30 @@ class ReverbLayout(QVBoxLayout):
 			self.model.disableReverb()
 
 	def reset(self):
-		self.reverbSize.getSlider().setValue(500)
-		self.reverbHFA.getSlider().setValue(500)
-		self.reverbBal.getSlider().setValue(500)
+		self.revTime.getSlider().setValue(1000)
+		self.revCutoff.getSlider().setValue(5000)
+		self.roomSize.getSlider().setValue(250)
+		self.revBalance.getSlider().setValue(500)
 		self.enableReverb.setText('Enable')
 		self.enableReverb.setCheckState(Qt.Unchecked)
 
-	def setSize(self):
-		self.model.getReverb().setIntensity(self.reverbSize.getSlider().value()/1000)
-		self.reverbSize.updateValue(round(self.model.getReverb().getIntensity(),2))
+	def setRevtime(self):
+		self.model.getReverb().setRevTime(self.revTime.getSlider().value()/1000)
+		self.revTime.updateValue(round(self.model.getReverb().getRevTime(),2))
 
-	def setHFA(self):
-		self.model.getReverb().setHFA(self.reverbHFA.getSlider().value()/1000)
-		self.reverbHFA.updateValue(round(self.model.getReverb().getHFA(),2))
+	def setCutoff(self):
+		self.model.getReverb().setCutoff(self.revCutoff.getSlider().value())
+		self.revCutoff.updateValue(round(self.model.getReverb().getCutoff(),2))
 
-	def setBal(self):
-		self.model.getReverb().setDryWet(self.reverbBal.getSlider().value()/1000)
-		self.reverbBal.updateValue(round(self.model.getReverb().getDryWet(),2))
+	def setRoomSize(self):
+		self.model.getReverb().setRoomSize(4.25 - self.roomSize.getSlider().value()/1000)
+		print(self.model.getReverb().getRoomSize())
+		self.roomSize.updateValue(round(4.25 - self.model.getReverb().getRoomSize(),2))
+
+	def setRevBalance(self):
+		self.model.getReverb().setBal(self.revBalance.getSlider().value()/1000)
+		self.revBalance.updateValue(round(self.model.getReverb().getBal(),2))
+
 
 class DelayLayout(QVBoxLayout):
 	def __init__(self, model):
@@ -577,11 +630,12 @@ class DelayLayout(QVBoxLayout):
 		self.model.getDelay().setFeedback(self.delayFeedback.getSlider().value()/1000)
 		self.delayFeedback.updateValue(round(self.model.getDelay().getFeedback(),2))
 
+# TO COMMENT
 class MplFigure(object):
 	def __init__(self, parent):
-		self.figure = plt.figure(facecolor='#31363B')
+		self.figure = plt.figure(figsize=(6, 9), dpi=100, facecolor='#31363B')
 		self.canvas = FigureCanvas(self.figure)
-
+		
 class WaveformWidget(QWidget):
 	def __init__(self, model):
 		super().__init__()
@@ -591,8 +645,6 @@ class WaveformWidget(QWidget):
 
 		self.initData(model)
 
-		#self.waveform.view(title='Scope', wxnoserver=True)
-
 		self.initWaveform()
 
 	def initUI(self):
@@ -600,57 +652,41 @@ class WaveformWidget(QWidget):
 
 		# mpl figure
 		self.mainFigure = MplFigure(self)
-		#vbox.addWidget(self.main_figure.toolbar)
 		vbox.addWidget(self.mainFigure.canvas)
 
 		self.setLayout(vbox)
 
+		"""The refreshing part of the app is handled with a QTimer that gets called 10 times a second and 
+		refreshes the gui at that time by calling the handleNewData function. 
+		That function gets the latest frame from the microphone, plots the time series, 
+		computes the Fourier transform and plots its modulus."""
 		timer = QTimer()
 		timer.timeout.connect(self.handleNewData)
 		timer.start(100)
-
-		# keep reference to timer        
+        
 		self.timer = timer
 
 	def initData(self, model):
-
-		# keeps reference to model
 		self.model = model
 
-		input = self.model.getInput()
-
 		# computes the parameters that will be used during plotting
-		chunksize = 1024
-		rate = 4000
-		self.freqVect = np.fft.rfftfreq(chunksize,1./rate)#input.getBufferSize() input.getSamplingRate()
-		self.timeVect = np.arange(chunksize, dtype=np.float32) / rate * 1000
+		self.freqVect = np.fft.rfftfreq(self.model.server.getBufferSize(), 1./ (self.model.server.getSamplingRate()/10))  #input.getBufferSize() input.getSamplingRate()
+		self.timeVect = np.arange(self.model.server.getBufferSize(), dtype=np.float32) / self.model.server.getSamplingRate() * 100
 
 	def initWaveform(self):
 		"""creates initial matplotlib plots in the main window and keeps 
 		references for further use"""
 
-		# top plot
-		self.axTop = self.mainFigure.figure.add_subplot(211)
-		self.axTop.set_ylim(-500, 500) #-32768, 32768
+		self.axTop = self.mainFigure.figure.add_subplot(111)
+		self.axTop.set_ylim(-2000, 2000)
 		self.axTop.set_xlim(0, self.timeVect.max())
-#		self.axTop.set_xlabel(u'time (ms)', fontsize=6, color='white')
-		
-		self.axTop.set_facecolor('#76797c')
+		self.axTop.set_xlabel(u'time (ms)', fontsize=8, color='white')
+		self.axTop.set_facecolor('#18465d')
 		self.axTop.tick_params(axis='x', colors='white')
 		self.axTop.tick_params(axis='y', colors='white')
 
-		# bottom plot
-		self.axBottom = self.mainFigure.figure.add_subplot(212)
-		self.axBottom.set_ylim(0, 1)
-		self.axBottom.set_xlim(0, self.freqVect.max())
-		self.axBottom.set_xlabel(u'frequency (Hz)', fontsize=6, color='white')
-		self.axBottom.set_facecolor('#76797c')
-		self.axBottom.tick_params(axis='x', colors='white')
-		self.axBottom.tick_params(axis='y', colors='white')
-
 		# line objects        
 		self.lineTop, = self.axTop.plot(self.timeVect, np.ones_like(self.timeVect), color='white')
-		self.lineBottom, = self.axBottom.plot(self.freqVect, np.ones_like(self.freqVect), color='white')
 
 	def handleNewData(self):
 		""" handles the asynchroneously collected sound chunks """
@@ -659,18 +695,9 @@ class WaveformWidget(QWidget):
 		streams = self.model.getFrames()
 		
 		if len(streams) > 0:
-			# keeps only the last frame
-			currentStream = streams[-1]
+			
 			# plots the time signal
 			self.lineTop.set_data(self.timeVect, streams*1000)
-			# computes and plots the fft signal            
-			fftFrame = np.fft.rfft(streams*1000)
-			
-			fftFrame /= np.abs(fftFrame).max()
-			
-			#print(np.abs(fft_frame).max())
 
-			self.lineBottom.set_data(self.freqVect, np.abs(fftFrame))            
-			
 			# refreshes the plots
 			self.mainFigure.canvas.draw()

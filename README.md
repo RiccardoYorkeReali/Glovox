@@ -63,6 +63,7 @@ The microphone has then been sewn inside the glove in such a way to put the sens
 
 
 The Glove can be used, connecting the jack to the computer, the computer to the audio card, launching the application and singing with the glove under the throat.
+
 <img width="388" alt="reo" src="https://user-images.githubusercontent.com/29773493/36478750-484b88f0-1706-11e8-9889-99a55f6f6e05.png">
 
 ## Usability Test

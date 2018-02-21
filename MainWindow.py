@@ -6,55 +6,71 @@ from MyWidgets import (EffectWidget, MainEffectLayout, ReverbLayout, DelayLayout
 ### THE GUI
 
 class MainWindow(QWidget):
+	""" Class that implements the view and the controller
+        
+        Attributes:
+            model         reference to the model
+            size          dimension of the computer screen
+            effectsFile   contains descriptions of each effect
+    """
 	def __init__(self, model, size):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
 		self.size = size
-		self.effects_file = json.load(open('effects.json'))
+		self.effectsFile = json.load(open('effects.json'))
 
 		self.init_ui()
 		self.centerOnScreen()
 
 	def init_ui(self):
+		""" Method to initialize the user interface """
 
 		#Title
 		self.setWindowTitle("Glovox")
+		self.setStyleSheet("""QToolTip { 
+		                           background-color: black; 
+		                           color: white; 
+		                           border: white solid 3px
+		                           }""")
 
-		#GUI Elements
+		#GUI ELEMENTS
+
+		# List containing the available effects
 		self.effectList = QListWidget()
 		self.typeFont = QFont(".Lucida Grande UI", 18)
 		self.effectList.setFont(self.typeFont)
 
 		noEff = QListWidgetItem('No Effect')
-		noEff.setToolTip(self.effects_file["effects"][0]["NoEffects"])
+		noEff.setToolTip(self.effectsFile["effects"][0]["NoEffects"])
 
 		dist = QListWidgetItem('Distortion')
-		dist.setToolTip(self.effects_file["effects"][1]["Distortion"])
+		dist.setToolTip(self.effectsFile["effects"][1]["Distortion"])
 
 		wah = QListWidgetItem('Auto-Wah')
-		wah.setToolTip(self.effects_file["effects"][2]["Auto-Wah"])
+		wah.setToolTip(self.effectsFile["effects"][2]["Auto-Wah"])
 
 		chords = QListWidgetItem('Harmonizer')
-		chords.setToolTip(self.effects_file["effects"][3]["Chords"])
+		chords.setToolTip(self.effectsFile["effects"][3]["Chords"])
 
 		sine = QListWidgetItem('Sine Oscillator')
-		sine.setToolTip(self.effects_file["effects"][4]["Sine Oscillator"])
+		sine.setToolTip(self.effectsFile["effects"][4]["Sine Oscillator"])
 
 		blit = QListWidgetItem('BLIT')
-		blit.setToolTip(self.effects_file["effects"][5]["BLIT"])
+		blit.setToolTip(self.effectsFile["effects"][5]["BLIT"])
 
 		superSaw = QListWidgetItem('Super Saw')
-		superSaw.setToolTip(self.effects_file["effects"][6]["Super Saw"])
+		superSaw.setToolTip(self.effectsFile["effects"][6]["Super Saw"])
 
 		phasor = QListWidgetItem('Phasor')
-		phasor.setToolTip(self.effects_file["effects"][7]["Phasor"])
+		phasor.setToolTip(self.effectsFile["effects"][7]["Phasor"])
 
 		rc = QListWidgetItem('RC Oscillator')
-		rc.setToolTip(self.effects_file["effects"][8]["RC Oscillator"])
+		rc.setToolTip(self.effectsFile["effects"][8]["RC Oscillator"])
 
 		lfo = QListWidgetItem('LF Oscillator')
-		lfo.setToolTip(self.effects_file["effects"][9]["LF Oscillator"])
+		lfo.setToolTip(self.effectsFile["effects"][9]["LF Oscillator"])
 
 		self.effectList.addItem(noEff)
 		self.effectList.addItem(dist)
@@ -68,7 +84,6 @@ class MainWindow(QWidget):
 		self.effectList.addItem(lfo)
 		self.effectList.setCurrentItem(self.effectList.item(0))
 
-		#Effects List
 		effectListLayout = QVBoxLayout()
 		effectListLayout.addWidget(self.effectList)
 
@@ -77,7 +92,7 @@ class MainWindow(QWidget):
 		effectListBox.setMinimumWidth(150)
 		effectListBox.setLayout(effectListLayout)
 
-		#Effects manager: Waveform and Effects
+		#Box displaying the waveform of the active effect
 		self.waveform = WaveformWidget(self.model)
 		analyzerLayout = QVBoxLayout()
 		analyzerLayout.addWidget(self.waveform)
@@ -88,6 +103,7 @@ class MainWindow(QWidget):
 
 		effectParameterLayout = QHBoxLayout()
 
+		#Boxes containing the parameters that can be used to modify the active effect, Rever and Delay
 		self.effect = EffectWidget('Effect', MainEffectLayout(self.model))
 		self.rev = EffectWidget('Reverb', ReverbLayout(self.model))
 		self.delay = EffectWidget('Delay', DelayLayout(self.model))
@@ -131,20 +147,23 @@ class MainWindow(QWidget):
 
 		self.show()
 
-		#Connections
+		#Connecting widgets
 		self.effectList.itemSelectionChanged.connect(self.changeEffect)
 
 	def centerOnScreen(self):
+		""" Method to center the GUI on the user screen """
 		qtRectangle = self.frameGeometry()
 		centerPoint = QDesktopWidget().availableGeometry().center()
 		qtRectangle.moveCenter(centerPoint)
 		self.move(qtRectangle.topLeft())
 
 	def closeEvent(self, event):
+		""" Overloading of close event. Overloading has been necessary to stop Pyo's Server """
 		self.model.switchToNoEff()# Necessary, because sometimes the app doesn't stop when we close it
 		self.model.close()
 
 	def changeEffect(self):
+		""" Method to change the effect"""
 		if self.effectList.currentItem().text() == 'No Effect':
 			self.effect.getLayout().changeEffect('No Effect')
 			self.model.switchToNoEff()

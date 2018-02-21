@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	#The Model
     model = Glovox() 
 
-    if qdark_present:
+    if qdark_present: # if this style has been imported, the GUI will use it
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     size = app.primaryScreen().size()

@@ -11,19 +11,26 @@ np.seterr(divide='ignore', invalid='ignore')
 # MY WIDGETS
 
 class mySlider(QWidget):
-	#Slider used to change effects' paramaters
+	""" Custom Slider composed by a label showing the name of the parameter, the current value of the slider and a QSlider.
+		It is used to vary the value of parameters of a certain effect.
+		
+		Attributes:
+			parameter    label describing the name of the parameter
+			value 	     float value of the parameter
+	"""
 	def __init__(self, label, value):
+		""" Init Method """
 		super().__init__()
 
-		self.layout = QVBoxLayout()
+		layout = QVBoxLayout()
 
 		self.parameter = QLabel(label)
 		self.parameter.setAlignment(Qt.AlignHCenter)
 		self.value = QLabel(str(value))
 		self.value.setAlignment(Qt.AlignHCenter)
 
-		self.layout.addWidget(self.parameter)
-		self.layout.addWidget(self.value)
+		layout.addWidget(self.parameter)
+		layout.addWidget(self.value)
 
 		self.slider = QSlider(Qt.Vertical)
 		if label == 'Depth':
@@ -31,50 +38,58 @@ class mySlider(QWidget):
 			self.slider.setMaximum(1000)
 			self.slider.setValue(value*200)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
+			layout.addWidget(self.slider)
 		elif label == 'Harmonics':
 			self.slider.setMinimum(1)
 			self.slider.setMaximum(1000)
 			self.slider.setValue(value*10)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
-		elif label == 'Revtime':
+			layout.addWidget(self.slider)
+		elif label == 'Intensity':
 			self.slider.setMinimum(1000)
 			self.slider.setMaximum(5000)
 			self.slider.setValue(value * 1000)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
+			layout.addWidget(self.slider)
 		elif label == 'Cutoff':
 			self.slider.setMinimum(1)
 			self.slider.setMaximum(10000)
 			self.slider.setValue(value)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
+			layout.addWidget(self.slider)
 		elif label == 'Room':
 			self.slider.setMinimum(250)
 			self.slider.setMaximum(4000)
 			self.slider.setValue(value*1000)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
+			layout.addWidget(self.slider)
 		else:
 			self.slider.setMinimum(1)
 			self.slider.setMaximum(1000)
 			self.slider.setValue(value*1000)
 			self.slider.setTickInterval(1)
-			self.layout.addWidget(self.slider)
+			layout.addWidget(self.slider)
 
-		self.layout.setAlignment(self.slider, Qt.AlignHCenter)
-		self.setLayout(self.layout)
+		layout.setAlignment(self.slider, Qt.AlignHCenter)
+		self.setLayout(layout)
 
 	def getSlider(self):
+		""" Method to get the QSlider """
 		return self.slider
 
 	def updateValue(self, newValue):
+		""" Method to update the value displayed by the custom slider, according to the QSlider """
 		self.value.setText(str(newValue))
 
 class EffectWidget(QGroupBox):
-	#Effect Box. In this Widget will be displayed the active effect and it's paramaters slider (or list of options)
+	""" GroupBox where active effect, reverb or delay parameters will be displayed.
+		
+		Attributes:
+			effectLayout    reference to a layout between mainEffectLayout, ReverbLayout and DelayLayout
+	"""
 	def __init__(self, title, effect): #Effect must be a Layout
+		""" Init Method """
+		
 		super().__init__()
 
 		self.setTitle(title)
@@ -86,11 +101,27 @@ class EffectWidget(QGroupBox):
 		self.setLayout(self.effectLayout)
 
 	def getLayout(self):
+		""" Method to get the effect, Reverb or delay layout. """
 		return self.effectLayout
 
 class MainEffectLayout(QStackedLayout):
-	#Stacked layout to display one effect at a time in the EffectWidget group box
+	""" Custom Layout used to switch between the available effects.
+
+		Attribute:
+			model           reference to the model
+			noEffWidget     reference to no Effect widget
+			distWidget      reference to Distortion widget
+			wahWidget       reference to Auto-wah widget
+			chordsWidget    reference to Harmonizer widget
+			sineWidget      reference to Sine OSC widget
+			blitWidget      reference to BLIT widget
+			superSawWidget  reference to Super Saw widget
+			phasorWidget    reference to Phasor Widget
+			rcWidget        reference to RC OSC widget
+			lfoWidget       reference to LF OSC widget
+	"""
 	def __init__(self, model):
+		""" Init Method"""
 		super().__init__()
 
 		self.model = model
@@ -117,11 +148,8 @@ class MainEffectLayout(QStackedLayout):
 		self.addWidget(self.rcWidget)
 		self.addWidget(self.lfoWidget)
 
-		self.typeFont = QFont(".Lucida Grande UI", 18)
-		self.chordsWidget.chordsList.setFont(self.typeFont)
-		self.lfoWidget.lfoWf.setFont(self.typeFont)
-
 	def changeEffect(self, effect):
+		""" Method to change the effect displayed in the EffectBox """
 		if effect == 'No Effect':
 			self.setCurrentWidget(self.noEffWidget)
 		elif effect == 'Distortion':
@@ -144,50 +172,64 @@ class MainEffectLayout(QStackedLayout):
 			self.setCurrentWidget(self.lfoWidget)
 
 	def getEffect(self):
+		""" Method to get the active effectm shown in the EffectBox """
 		return self.currentWidget()
 
-#The following classes implement the widgets related to each effect. Each class contains method to update model values and the view
 class NoEffectWidget(QWidget):
+	""" Custom Widget related to the clean signal. """
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 class DistortionWidget(QWidget):
+	""" Custom Widget related to the effect 'Distortion'.
+		
+		Attributes:
+			model      reference to the model
+			distDrive  slider for Drive parameter
+			LPFSlope   slider for slope parameter
+
+	"""
 	def __init__(self, model):
+		""" Init method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.distDrive = mySlider('Drive', 0.75)
-		self.paramLayout.addWidget(self.distDrive)
+		paramLayout.addWidget(self.distDrive)
 
 		self.LPFSlope = mySlider('LPF Slope', 0.5)
-		self.paramLayout.addWidget(self.LPFSlope)
+		paramLayout.addWidget(self.LPFSlope)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.distDrive.getSlider().valueChanged.connect(self.setDrive)
 		self.LPFSlope.getSlider().valueChanged.connect(self.setLPFSlope)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setDrive(self):
+		""" Method to set Drive parameter in the model """
 		self.model.getDistortion().setDrive(self.distDrive.getSlider().value()/1000)
 		self.distDrive.updateValue(round(self.model.getDistortion().getDrive(),2))
 
 	def setLPFSlope(self):
+		""" Method to set Slope parameter in the model  """
 		self.model.getDistortion().setSlope(self.LPFSlope.getSlider().value()/1000)
 		self.LPFSlope.updateValue(round(self.model.getDistortion().getSlope(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.distDrive.getSlider().setValue(750)
 		self.LPFSlope.getSlider().setValue(500)
 
@@ -195,25 +237,25 @@ class DistortionWidget(QWidget):
 		self.LPFSlope.updateValue(round(self.model.getDistortion().getSlope(),2))
 
 class WahWidget(QWidget):
+	""" Custom Widget related to the effect 'Auto-Wah'. """
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
-	def setDepth(self):
-		self.model.getChorus().setDepth(self.chorusDepth.getSlider().value()/200)
-
-	def setFeedback(self):
-		self.model.getChorus().setFeedback(self.chorusFB.getSlider().value()/1000)
-
-	def setBal(self):
-		self.model.getChorus().setDryWet(self.chorusDryWet.getSlider().value()/1000)
-
 class ChordsWidget(QWidget):
+	""" Custom Widget related to the effect 'Harmonizer'. 
+
+		Attributes:
+			model       reference to the model
+			chordsList  list of available chords
+
+	"""
 	def __init__(self, model):
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
+		layout = QVBoxLayout()
 
 		self.chordsList = QListWidget()
 		self.chordsList.addItem(QListWidgetItem('Major'))
@@ -225,13 +267,17 @@ class ChordsWidget(QWidget):
 		self.chordsList.addItem(QListWidgetItem('Diminished'))
 		self.chordsList.setCurrentItem(self.chordsList.item(0))
 
-		self.layout.addWidget(self.chordsList)
+		typeFont = QFont(".Lucida Grande UI", 18)
+		self.chordsList.setFont(typeFont)
 
-		self.setLayout(self.layout)
+		layout.addWidget(self.chordsList)
+
+		self.setLayout(layout)
 
 		self.chordsList.itemSelectionChanged.connect(self.changeChords)
 
 	def changeChords(self):
+		""" Method to change the chords in the model """
 		if self.chordsList.currentItem().text() == 'Major':
 			self.model.getChords().setMajor()
 			self.model.updateTableChords()
@@ -275,184 +321,242 @@ class ChordsWidget(QWidget):
 			self.model.getDelay().setInput(self.model.getChords().getSignal())
 			
 	def reset(self):
+		""" Method to reset the active chord """
 		self.chordsList.setCurrentItem(self.chordsList.item(0))
 
 class SineWidget(QWidget):
+	""" Custom Widget related to the effect 'Sinusoidal Oscillator'. 
+
+		Attributes:
+			model       reference to the model
+			sinePhase   slider for Phase parameter
+	"""
+
 	def __init__(self, model):
+		""" Inith Method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.sinePhase = mySlider('Phase', 0.0)
-		self.paramLayout.addWidget(self.sinePhase)
+		paramLayout.addWidget(self.sinePhase)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.sinePhase.getSlider().valueChanged.connect(self.setPhase)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setPhase(self):
+		""" Method to set the parameter Phase in the model """
 		self.model.getSine().setPhase(self.sinePhase.getSlider().value()/1000)
 		self.sinePhase.updateValue(round(self.model.getSine().getPhase(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.sinePhase.getSlider().setValue(0)
 		self.sinePhase.updateValue(round(self.model.getSine().getPhase(), 2))
 
 class BlitWidget(QWidget):
+	""" Custom Widget related to the effect 'BLIT'. 
+
+		Attributes:
+			model       reference to the model
+			blitHarm    slider for harm parameter
+	"""
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.blitHarm = mySlider('Harmonics', 0.0)
-		self.paramLayout.addWidget(self.blitHarm)
+		paramLayout.addWidget(self.blitHarm)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.blitHarm.getSlider().valueChanged.connect(self.setHarms)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setHarms(self):
+		""" Method to set the parameter Harms in the model """
 		self.model.getBlit().setHarms(self.blitHarm.getSlider().value()/10)
 		self.blitHarm.updateValue(round(self.model.getBlit().getHarms(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
+
 		self.blitHarm.getSlider().setValue(400)
 		self.blitHarm.updateValue(round(self.model.getBlit().getHarms(), 2))
 
 class SuperSawWidget(QWidget):
+	""" Custom Widget related to the effect 'Super Saw'. 
+
+		Attributes:
+			model       reference to the model
+			ssDetune    slider for Detune parameter
+			ssBal		slider for Balance parameter
+	"""
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.ssDetune = mySlider('Detune', 0.5)
 		self.ssBal = mySlider('Balance', 0.7)
-		self.paramLayout.addWidget(self.ssDetune)
-		self.paramLayout.addWidget(self.ssBal)
+		paramLayout.addWidget(self.ssDetune)
+		paramLayout.addWidget(self.ssBal)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.ssDetune.getSlider().valueChanged.connect(self.setDetune)
 		self.ssBal.getSlider().valueChanged.connect(self.setBal)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setDetune(self):
+		""" Method to set the parameter Detune in the model """
 		self.model.getSuperSaw().setDetune(self.ssDetune.getSlider().value()/1000)
 		self.ssDetune.updateValue(round(self.model.getSuperSaw().getDetune(),2))
 
 	def setBal(self):
+		""" Method to set the parameter Balance in the model """
 		self.model.getSuperSaw().setBal(self.ssBal.getSlider().value()/1000)
 		self.ssBal.updateValue(round(self.model.getSuperSaw().getBal(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.ssDetune.getSlider().setValue(500)
 		self.ssBal.getSlider().setValue(700)
 		self.ssDetune.updateValue(round(self.model.getSuperSaw().getDetune(), 2))
 		self.ssBal.updateValue(round(self.model.getSuperSaw().getBal(), 2))
 
 class PhasorWidget(QWidget):
+	""" Custom Widget related to the effect 'Phasor'. 
+
+		Attributes:
+			model       reference to the model
+			phase       slider for phase parameter
+	"""
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.phase = mySlider('Phase', 0.0)
-		self.paramLayout.addWidget(self.phase)
+		paramLayout.addWidget(self.phase)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.phase.getSlider().valueChanged.connect(self.setPhase)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setPhase(self):
+		""" Method to set the parameter Phase in the model """
 		self.model.getPhasor().setPhase(self.phase.getSlider().value()/1000)
 		self.phase.updateValue(round(self.model.getPhasor().getPhase(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.phase.getSlider().setValue(0)
 		self.phase.updateValue(round(self.model.getPhasor().getPhase(), 2))
 
 class RCOscWidget(QWidget):
+	""" Custom Widget related to the effect 'RC Oscillator'. 
+
+		Attributes:
+			model       reference to the model
+			rcSharp     slider for Sharp parameter
+	"""
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
-		self.invisibleLabel = QLabel('')
-		self.layout.addWidget(self.invisibleLabel)
+		layout = QVBoxLayout()
+		invisibleLabel = QLabel('')
+		layout.addWidget(invisibleLabel)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.rcSharp = mySlider('Sharpness', 0.25)
-		self.paramLayout.addWidget(self.rcSharp)
+		paramLayout.addWidget(self.rcSharp)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.layout.addWidget(self.paramWidget)
+		layout.addWidget(paramWidget)
 
 		self.rcSharp.getSlider().valueChanged.connect(self.setSharp)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 
 	def setSharp(self):
+		""" Method to set the parameter Sharp in the model """
 		self.model.getRC().setSharp(self.rcSharp.getSlider().value()/1000)
 		self.rcSharp.updateValue(round(self.model.getRC().getSharp(),2))
 
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.rcSharp.getSlider().setValue(250)
 		self.rcSharp.updateValue(round(self.model.getRC().getSharp(), 2))
 
 class LFOWidget(QWidget):
+	""" Custom Widget related to the effect 'LF Oscillator'. 
+
+		Attributes:
+			model       reference to the model
+			lfoWf       list of available waveforms
+
+	"""
 	def __init__(self, model):
+		""" Init method """
 		super().__init__()
 
 		self.model = model
 
-		self.layout = QVBoxLayout()
+		layout = QVBoxLayout()
 
 		self.lfoWf = QListWidget()
 		self.lfoWf.addItem(QListWidgetItem('Saw Up'))
@@ -464,13 +568,17 @@ class LFOWidget(QWidget):
 		self.lfoWf.addItem(QListWidgetItem('Sample & Hold'))
 		self.lfoWf.addItem(QListWidgetItem('Modulated Sine'))
 		self.lfoWf.setCurrentItem(self.lfoWf.item(0))
-		self.layout.addWidget(self.lfoWf)
+		layout.addWidget(self.lfoWf)
 
-		self.setLayout(self.layout)
+		typeFont = QFont(".Lucida Grande UI", 18)
+		self.lfoWf.setFont(typeFont)
+
+		self.setLayout(layout)
 
 		self.lfoWf.itemSelectionChanged.connect(self.changeWaveform)
 
 	def changeWaveform(self):
+		""" Method to change the waveform in the model """
 		if self.lfoWf.currentItem().text() == 'Saw Up':
 			self.model.getLFO().setSawUp()
 			self.model.getReverb().setInput(self.model.getLFO().getSignal())
@@ -512,10 +620,22 @@ class LFOWidget(QWidget):
 			self.model.getDelay().setInput(self.model.getLFO().getSignal())
 			
 	def reset(self):
+		""" Method to reset the active waveform """
 		self.lfoWf.setCurrentItem(self.lfoWf.item(0))
 
 class ReverbLayout(QVBoxLayout):
+	""" Custom Layout used to manage Reverb effect.
+
+		Attribute:
+			model           reference to the model
+			enableReverb    Check box to enable and disable Reverb
+			revTime    		slider for parameter RevTime
+			revCutoff		slider for parameter Cutoff
+			roomSize 		slider for parameter Roomsize
+			revBalance 		slider for parameter revBalance
+	"""
 	def __init__(self, model):
+		""" Init mehtod """
 		super().__init__()
 
 		self.model = model
@@ -523,24 +643,24 @@ class ReverbLayout(QVBoxLayout):
 		self.enableReverb = QCheckBox('Enable')
 		self.addWidget(self.enableReverb)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
-		self.revTime = mySlider('Revtime', 1.00)
-		self.paramLayout.addWidget(self.revTime)
+		self.revTime = mySlider('Intensity', 1.00)
+		paramLayout.addWidget(self.revTime)
 
 		self.revCutoff = mySlider('Cutoff', 5000)
-		self.paramLayout.addWidget(self.revCutoff)
+		paramLayout.addWidget(self.revCutoff)
 
 		self.roomSize = mySlider('Room', 0.25)
-		self.paramLayout.addWidget(self.roomSize)
+		paramLayout.addWidget(self.roomSize)
 
 		self.revBalance = mySlider('Balance', 0.5)
-		self.paramLayout.addWidget(self.revBalance)
+		paramLayout.addWidget(self.revBalance)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.addWidget(self.paramWidget)
+		self.addWidget(paramWidget)
 
 		self.enableReverb.stateChanged.connect(self.toggleReverbMode)
 		self.revTime.getSlider().valueChanged.connect(self.setRevtime)
@@ -549,6 +669,7 @@ class ReverbLayout(QVBoxLayout):
 		self.revBalance.getSlider().valueChanged.connect(self.setRevBalance)
 
 	def toggleReverbMode(self, activate):
+		""" Method to toggle Reverb Effect """
 		if activate == Qt.Checked:
 			self.enableReverb.setText('Disable')
 			self.model.enableReverb()
@@ -556,7 +677,28 @@ class ReverbLayout(QVBoxLayout):
 			self.enableReverb.setText('Enable')
 			self.model.disableReverb()
 
+	def setRevtime(self):
+		""" Method to set the parameter Revtime in the model """
+		self.model.getReverb().setRevTime(self.revTime.getSlider().value()/1000)
+		self.revTime.updateValue(round(self.model.getReverb().getRevTime(),2))
+
+	def setCutoff(self):
+		""" Method to set the parameter Cutoff in the model """
+		self.model.getReverb().setCutoff(self.revCutoff.getSlider().value())
+		self.revCutoff.updateValue(round(self.model.getReverb().getCutoff(),2))
+
+	def setRoomSize(self):
+		""" Method to set the parameter RoomSize in the model """
+		self.model.getReverb().setRoomSize(4.25 - self.roomSize.getSlider().value()/1000)
+		self.roomSize.updateValue(round(4.25 - self.model.getReverb().getRoomSize(),2))
+
+	def setRevBalance(self):
+		""" Method to set the parameter Bal in the model """
+		self.model.getReverb().setBal(self.revBalance.getSlider().value()/1000)
+		self.revBalance.updateValue(round(self.model.getReverb().getBal(),2))
+
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.revTime.getSlider().setValue(1000)
 		self.revCutoff.getSlider().setValue(5000)
 		self.roomSize.getSlider().setValue(250)
@@ -564,26 +706,18 @@ class ReverbLayout(QVBoxLayout):
 		self.enableReverb.setText('Enable')
 		self.enableReverb.setCheckState(Qt.Unchecked)
 
-	def setRevtime(self):
-		self.model.getReverb().setRevTime(self.revTime.getSlider().value()/1000)
-		self.revTime.updateValue(round(self.model.getReverb().getRevTime(),2))
-
-	def setCutoff(self):
-		self.model.getReverb().setCutoff(self.revCutoff.getSlider().value())
-		self.revCutoff.updateValue(round(self.model.getReverb().getCutoff(),2))
-
-	def setRoomSize(self):
-		self.model.getReverb().setRoomSize(4.25 - self.roomSize.getSlider().value()/1000)
-		print(self.model.getReverb().getRoomSize())
-		self.roomSize.updateValue(round(4.25 - self.model.getReverb().getRoomSize(),2))
-
-	def setRevBalance(self):
-		self.model.getReverb().setBal(self.revBalance.getSlider().value()/1000)
-		self.revBalance.updateValue(round(self.model.getReverb().getBal(),2))
-
 
 class DelayLayout(QVBoxLayout):
+	""" Custom Layout used to manage Reverb effect.
+
+		Attribute:
+			model           reference to the model
+			enableDelay     Check box to enable and disable Delay
+			delayAmount    	slider for parameter Delay
+			delayFeedback	slider for parameter Feedback
+	"""
 	def __init__(self, model):
+		""" Init Method """
 		super().__init__()
 
 		self.model = model
@@ -591,24 +725,25 @@ class DelayLayout(QVBoxLayout):
 		self.enableDelay = QCheckBox('Enable')
 		self.addWidget(self.enableDelay)
 
-		self.paramLayout = QHBoxLayout()
+		paramLayout = QHBoxLayout()
 
 		self.delayAmount = mySlider('Delay', 0.25)
-		self.paramLayout.addWidget(self.delayAmount)
+		paramLayout.addWidget(self.delayAmount)
 
 		self.delayFeedback = mySlider('Feedback', 0.0)
-		self.paramLayout.addWidget(self.delayFeedback)
+		paramLayout.addWidget(self.delayFeedback)
 
-		self.paramWidget = QWidget()
-		self.paramWidget.setLayout(self.paramLayout)
+		paramWidget = QWidget()
+		paramWidget.setLayout(paramLayout)
 		
-		self.addWidget(self.paramWidget)
+		self.addWidget(paramWidget)
 
 		self.enableDelay.stateChanged.connect(self.toggleDelayMode)
 		self.delayAmount.getSlider().valueChanged.connect(self.setAmountDelay)
 		self.delayFeedback.getSlider().valueChanged.connect(self.setFeedback)
 
 	def toggleDelayMode(self, activate):
+		""" Method to toggle Delay Effect """
 		if activate == Qt.Checked:
 			self.enableDelay.setText('Disable')
 			self.model.enableDelay()
@@ -616,31 +751,51 @@ class DelayLayout(QVBoxLayout):
 			self.enableDelay.setText('Enable')
 			self.model.disableDelay()
 
+	def setAmountDelay(self):
+		""" Method to set the parameter Delay in the model """
+		self.model.getDelay().setDelayAmount(self.delayAmount.getSlider().value()/1000)
+		self.delayAmount.updateValue(round(self.model.getDelay().getDelayAmount(),2))
+
+	def setFeedback(self):
+		""" Method to set the parameter Feedback in the model """
+		self.model.getDelay().setFeedback(self.delayFeedback.getSlider().value()/1000)
+		self.delayFeedback.updateValue(round(self.model.getDelay().getFeedback(),2))
+
 	def reset(self):
+		""" Method to set the parameters at the initial state in the model """
 		self.delayAmount.getSlider().setValue(250)
 		self.delayFeedback.getSlider().setValue(0)
 		self.enableDelay.setText('Enable')
 		self.enableDelay.setCheckState(Qt.Unchecked)
 
-	def setAmountDelay(self):
-		self.model.getDelay().setDelayAmount(self.delayAmount.getSlider().value()/1000)
-		self.delayAmount.updateValue(round(self.model.getDelay().getDelayAmount(),2))
 
-	def setFeedback(self):
-		self.model.getDelay().setFeedback(self.delayFeedback.getSlider().value()/1000)
-		self.delayFeedback.updateValue(round(self.model.getDelay().getFeedback(),2))
-
-# TO COMMENT
 class MplFigure(object):
+	""" Custom widget used to plot waveform.
+
+		Attribute:
+			figure     figure to plot waveform
+			canvas     canvas necessary for figure of matplotlib
+	"""
 	def __init__(self, parent):
+		"""Init method"""
 		self.figure = plt.figure(figsize=(6, 9), dpi=100, facecolor='#31363B')
 		self.canvas = FigureCanvas(self.figure)
-		
+
+
 class WaveformWidget(QWidget):
+	""" Custom widget used to represent waveform.
+
+		Attribute:
+			mainFigure     reference to MplFigure Class
+			timer          used to refresh waveform
+			model		   reference to the model
+			freqVect       Discrete Fourier Transform sample frequencies
+			timeVect       time signal
+	"""
 	def __init__(self, model):
+		""" Init method """
 		super().__init__()
 
-		#customize the UI
 		self.initUI()
 
 		self.initData(model)
@@ -648,6 +803,7 @@ class WaveformWidget(QWidget):
 		self.initWaveform()
 
 	def initUI(self):
+		"""Init UI"""
 		vbox = QVBoxLayout()
 
 		# mpl figure
@@ -663,14 +819,15 @@ class WaveformWidget(QWidget):
 		timer = QTimer()
 		timer.timeout.connect(self.handleNewData)
 		timer.start(100)
-        
+		
 		self.timer = timer
 
 	def initData(self, model):
+		"""Init method to set model, frequencies, and time"""
 		self.model = model
 
 		# computes the parameters that will be used during plotting
-		self.freqVect = np.fft.rfftfreq(self.model.server.getBufferSize(), 1./ (self.model.server.getSamplingRate()/10))  #input.getBufferSize() input.getSamplingRate()
+		self.freqVect = np.fft.rfftfreq(self.model.server.getBufferSize(), 1./ (self.model.server.getSamplingRate()/10))
 		self.timeVect = np.arange(self.model.server.getBufferSize(), dtype=np.float32) / self.model.server.getSamplingRate() * 100
 
 	def initWaveform(self):
@@ -690,8 +847,6 @@ class WaveformWidget(QWidget):
 
 	def handleNewData(self):
 		""" handles the asynchroneously collected sound chunks """
-
-		# gets the latest frames        
 		streams = self.model.getFrames()
 		
 		if len(streams) > 0:
